@@ -41,3 +41,8 @@ ORDERS: List[Order] = []
 def create_order(order: Order):
     ORDERS.append(order)
     return {"status": "ok", "order": order}
+
+
+@app.get("/api/orders/")
+def get_orders():
+    return ORDERS
