@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.fields import ORDER_FIELDS
+from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
 
@@ -17,3 +19,25 @@ app.add_middleware(
 @app.get("/api/order_fields/")
 def get_order_fields():
     return ORDER_FIELDS
+
+
+class Order(BaseModel):
+    cargo_type: str
+    weight: float
+    volume: float = None
+    from_city: str
+    to_city: str
+    date_from: str
+    date_to: str = None
+    contact: str
+    phone: str
+
+
+# временное "хранилище" заявок
+ORDERS: List[Order] = []
+
+
+@app.post("/api/orders/")
+def create_order(order: Order):
+    ORDERS.append(order)
+    return {"status": "ok", "order": order}
