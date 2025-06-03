@@ -1,1 +1,14 @@
-backend_debug.log
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# logs — все кроме backend_debug.log!
+*.log
+!backend_debug.log
+
+# system
+.DS_Store
+.env
