@@ -19,13 +19,13 @@ export default function OrderFilter({ onFilter }) {
     };
 
     return (
-        <div style={{ marginBottom: 12, display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <input placeholder="Город" value={city} onChange={e => setCity(e.target.value)} />
             <input placeholder="Статус" value={status} onChange={e => setStatus(e.target.value)} />
             <input type="date" value={date} onChange={e => setDate(e.target.value)} />
             <input placeholder="Цена" value={price} onChange={e => setPrice(e.target.value)} />
             <input placeholder="Тип груза" value={cargoType} onChange={e => setCargoType(e.target.value)} />
-            <button onClick={handleFilter}>Фильтровать</button>
+            <button onClick={handleFilter}>Применить фильтр</button>
         </div>
     );
 }
