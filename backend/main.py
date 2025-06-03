@@ -1,6 +1,8 @@
 import logging
-from fastapi import FastAPI, Query, HTTPException
+import time
+from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from typing import List, Optional
 from pydantic import BaseModel
 import uuid
@@ -24,6 +26,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Централизованное логирование всех запросов и ошибок
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    try:
+        response = await call_next(request)
+        process_time = (time.time() - start_time) * 1000
+        log_message = (
+            f"{request.method} {request.url.path} "
+            f"Status {response.status_code} "
+            f"Query {dict(request.query_params)} "
+            f"Process {process_time:.2f}ms"
+        )
+        logging.info(log_message)
+        return response
+    except Exception as e:
+        logging.exception(
+            f"Exception for {request.method} {request.url.path}: {e}")
+        raise
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.error(f"UNHANDLED EXCEPTION at {request.url.path}: {repr(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+    )
 
 # Модели данных
 
@@ -60,8 +93,6 @@ def get_orders(
     price: Optional[str] = Query(None),
     cargo_type: Optional[str] = Query(None)
 ):
-    logging.info(
-        f"Фильтрация: city={city}, status={status}, date={date}, price={price}, cargo_type={cargo_type}")
     filtered_orders = ORDERS_DB
     if city:
         filtered_orders = [
@@ -87,7 +118,6 @@ def get_orders(
 def create_order(order: Order):
     order.id = str(uuid.uuid4())
     ORDERS_DB.append(order)
-    logging.info(f"Создана заявка: {order}")
     return order
 
 # Регистрация пользователя
@@ -100,7 +130,6 @@ def register_user(user: User):
             status_code=400, detail="Пользователь уже существует")
     user.id = str(uuid.uuid4())
     USERS_DB.append(user)
-    logging.info(f"Зарегистрирован пользователь: {user.username}")
     return {"status": "ok", "id": user.id}
 
 # Авторизация пользователя
@@ -110,6 +139,5 @@ def register_user(user: User):
 def login(user: User):
     for existing_user in USERS_DB:
         if existing_user.username == user.username and existing_user.password == user.password:
-            logging.info(f"Вход: {user.username}")
             return {"status": "ok", "id": existing_user.id, "role": existing_user.role}
     raise HTTPException(status_code=401, detail="Неверные учетные данные")
