@@ -1,45 +1,31 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Query
+from typing import Optional, List
+from models import Order  # Предполагается, что модель Order определена в models.py
 import logging
 
-# Настройка логирования
-logging.basicConfig(
-    filename="backend_debug.log",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-    encoding="utf-8",
-    filemode="a",
-)
-
 app = FastAPI()
-ORDERS = []
+
+# Настройка логирования
+logging.basicConfig(filename='backend_debug.log', level=logging.INFO)
 
 
-class Order(BaseModel):
-    cargoType: str
-    weight: str     # Все поля — строки!
-    fromCity: str
-    toCity: str
-    date: str
-    contact: str
-    phone: str
+@app.get("/orders", response_model=List[Order])
+def get_orders(
+    city: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
+):
+    # Предполагается, что у вас есть функция get_all_orders() для получения всех заявок
+    orders = get_all_orders()  # Замените на вашу реальную функцию получения заявок
 
+    # Фильтрация
+    if city:
+        orders = [order for order in orders if order.city == city]
+    if status:
+        orders = [order for order in orders if order.status == status]
+    if date:
+        orders = [order for order in orders if order.date == date]
 
-@app.post("/api/orders/")
-def create_order(order: Order):
-    ORDERS.append(order)
-    logging.info(f"Добавлена новая заявка: {order}")
-    return {"status": "ok", "order": order}
-
-
-@app.get("/api/orders/")
-def get_orders():
-    logging.info(f"Запрошен список заявок (всего: {len(ORDERS)})")
-    return ORDERS
-
-
-@app.get("/api/order_fields/")
-def get_order_fields():
-    return [
-        "cargoType", "weight", "fromCity", "toCity", "date", "contact", "phone"
-    ]
+    logging.info(
+        f"Фильтрация заявок: city={city}, status={status}, date={date}, найдено: {len(orders)}")
+    return orders
