@@ -1,30 +1,35 @@
-// frontend/src/app/page.tsx
+"use client";
+import OrderForm from "@/components/OrderForm";
+import OrderList from "@/components/OrderList";
+import { useState } from "react";
 
 export default function HomePage() {
+  const [refresh, setRefresh] = useState(0);
+
+  // Когда заявка добавлена — обновить список
+  function handleOrderAdded() {
+    setRefresh((r) => r + 1);
+  }
+
   return (
-    <div style={{ padding: 32, maxWidth: 600, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 32, marginBottom: 16 }}>TransInfo — главная страница</h1>
-      <p style={{ fontSize: 18, marginBottom: 32 }}>
-        Добро пожаловать на платформу TransInfo!
-        Здесь вы сможете размещать и находить заявки на перевозки грузов по Грузии, СНГ и Европе.
-      </p>
-      <a
-        href="/auth"
-        style={{
-          display: "inline-block",
-          padding: "12px 32px",
-          borderRadius: 8,
-          background: "#222",
-          color: "#fff",
-          textDecoration: "none",
-          fontWeight: "bold"
-        }}
-      >
-        Войти или зарегистрироваться
-      </a>
-      <div style={{ marginTop: 64, color: "#aaa" }}>
-        <i>Форма заявки будет добавлена здесь на следующем этапе.</i>
+    <main style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "flex-start",
+      padding: "48px 12px",
+      fontFamily: "Arial, Helvetica, sans-serif",
+      background: "var(--background)",
+      color: "var(--foreground)",
+    }}>
+      <h1 style={{ fontSize: 32, marginBottom: 24, fontWeight: 700 }}>Заявки на перевозку</h1>
+      <div style={{ maxWidth: 480, width: "100%", marginBottom: 36 }}>
+        <OrderForm onOrderAdded={handleOrderAdded} />
       </div>
-    </div>
+      <div style={{ maxWidth: 720, width: "100%" }}>
+        <OrderList refresh={refresh} />
+      </div>
+    </main>
   );
 }
