@@ -1,33 +1,29 @@
 import logging
 import time
-from fastapi import FastAPI, Query, HTTPException, Request
+from fastapi import FastAPI, Query, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List, Optional
 from pydantic import BaseModel
 import uuid
 
-# Настройка логирования
 logging.basicConfig(
     filename="backend_debug.log",
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s"
 )
 
-# Инициализация приложения
 app = FastAPI()
 
-# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    # Замените на список разрешённых источников в продакшене
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Централизованное логирование всех запросов и ошибок
+# Middleware и error handler
 
 
 @app.middleware("http")
@@ -58,7 +54,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal Server Error"},
     )
 
-# Модели данных
+# Модели
 
 
 class Order(BaseModel):
@@ -69,20 +65,26 @@ class Order(BaseModel):
     price: str
     cargo_type: str
     comment: Optional[str] = ""
+    username: Optional[str] = ""  # автор заявки
 
 
 class User(BaseModel):
     id: str
     username: str
-    password: str  # В продакшене используйте хеширование паролей
+    password: str  # не хешируется для демо!
     role: str = "client"
 
 
-# Временные базы данных
 ORDERS_DB = []
-USERS_DB = []
+USERS_DB = [
+    User(id=str(uuid.uuid4()), username="admin", password="admin", role="admin")
+]
 
-# Получение списка заявок с фильтрацией
+
+def get_user(username: str):
+    return next((u for u in USERS_DB if u.username == username), None)
+
+# Заказы с фильтрацией
 
 
 @app.get("/orders", response_model=List[Order])
@@ -111,8 +113,6 @@ def get_orders(
             order for order in filtered_orders if order.cargo_type.lower() == cargo_type.lower()]
     return filtered_orders
 
-# Создание новой заявки
-
 
 @app.post("/orders", response_model=Order)
 def create_order(order: Order):
@@ -120,7 +120,12 @@ def create_order(order: Order):
     ORDERS_DB.append(order)
     return order
 
-# Регистрация пользователя
+
+@app.delete("/orders/{order_id}")
+def delete_order(order_id: str):
+    global ORDERS_DB
+    ORDERS_DB = [o for o in ORDERS_DB if o.id != order_id]
+    return {"status": "deleted"}
 
 
 @app.post("/register")
@@ -130,9 +135,7 @@ def register_user(user: User):
             status_code=400, detail="Пользователь уже существует")
     user.id = str(uuid.uuid4())
     USERS_DB.append(user)
-    return {"status": "ok", "id": user.id}
-
-# Авторизация пользователя
+    return {"status": "ok", "id": user.id, "role": user.role}
 
 
 @app.post("/login")
@@ -141,3 +144,16 @@ def login(user: User):
         if existing_user.username == user.username and existing_user.password == user.password:
             return {"status": "ok", "id": existing_user.id, "role": existing_user.role}
     raise HTTPException(status_code=401, detail="Неверные учетные данные")
+
+
+@app.get("/profile/{username}", response_model=User)
+def profile(username: str):
+    u = get_user(username)
+    if not u:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return u
+
+
+@app.get("/users", response_model=List[User])
+def users():
+    return USERS_DB

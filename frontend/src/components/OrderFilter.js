@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function OrderFilter({ onFilter }) {
     const [city, setCity] = useState('');
@@ -10,11 +10,7 @@ export default function OrderFilter({ onFilter }) {
 
     const handleFilter = () => {
         onFilter({
-            city,
-            status,
-            date,
-            price,
-            cargo_type: cargoType,
+            city, status, date, price, cargo_type: cargoType
         });
     };
 
@@ -25,7 +21,7 @@ export default function OrderFilter({ onFilter }) {
             <input type="date" value={date} onChange={e => setDate(e.target.value)} />
             <input placeholder="Цена" value={price} onChange={e => setPrice(e.target.value)} />
             <input placeholder="Тип груза" value={cargoType} onChange={e => setCargoType(e.target.value)} />
-            <button onClick={handleFilter}>Применить фильтр</button>
+            <button onClick={handleFilter}>Фильтр</button>
         </div>
     );
 }
