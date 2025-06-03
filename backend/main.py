@@ -5,18 +5,27 @@ from typing import List, Optional
 from pydantic import BaseModel
 import uuid
 
-# Логирование
+# Настройка логирования
 logging.basicConfig(
     filename="backend_debug.log",
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s"
 )
 
-# Демо "база" в памяти (замените на свою при необходимости)
-ORDERS_DB = []
-USERS_DB = []
+# Инициализация приложения
+app = FastAPI()
 
-# Модели
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    # Замените на список разрешённых источников в продакшене
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Модели данных
 
 
 class Order(BaseModel):
@@ -26,30 +35,21 @@ class Order(BaseModel):
     date: str
     price: str
     cargo_type: str
-    comment: str = ""
-    # Добавляйте тут все остальные поля, которые были у вас в старой версии
+    comment: Optional[str] = ""
 
 
 class User(BaseModel):
     id: str
     username: str
-    password: str  # Только для примера! В реале хешируйте!
+    password: str  # В продакшене используйте хеширование паролей
     role: str = "client"
 
 
-# FastAPI app
-app = FastAPI()
+# Временные базы данных
+ORDERS_DB = []
+USERS_DB = []
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Разрешить всё для теста, на проде указать фронтенд!
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Получить все заявки с фильтрацией
+# Получение списка заявок с фильтрацией
 
 
 @app.get("/orders", response_model=List[Order])
@@ -62,21 +62,25 @@ def get_orders(
 ):
     logging.info(
         f"Фильтрация: city={city}, status={status}, date={date}, price={price}, cargo_type={cargo_type}")
-    filtered = ORDERS_DB
+    filtered_orders = ORDERS_DB
     if city:
-        filtered = [o for o in filtered if o.city.lower() == city.lower()]
+        filtered_orders = [
+            order for order in filtered_orders if order.city.lower() == city.lower()]
     if status:
-        filtered = [o for o in filtered if o.status.lower() == status.lower()]
+        filtered_orders = [
+            order for order in filtered_orders if order.status.lower() == status.lower()]
     if date:
-        filtered = [o for o in filtered if o.date == date]
+        filtered_orders = [
+            order for order in filtered_orders if order.date == date]
     if price:
-        filtered = [o for o in filtered if o.price == price]
+        filtered_orders = [
+            order for order in filtered_orders if order.price == price]
     if cargo_type:
-        filtered = [o for o in filtered if o.cargo_type.lower() ==
-                    cargo_type.lower()]
-    return filtered
+        filtered_orders = [
+            order for order in filtered_orders if order.cargo_type.lower() == cargo_type.lower()]
+    return filtered_orders
 
-# Добавить заявку
+# Создание новой заявки
 
 
 @app.post("/orders", response_model=Order)
@@ -86,25 +90,26 @@ def create_order(order: Order):
     logging.info(f"Создана заявка: {order}")
     return order
 
-# Пример регистрации
+# Регистрация пользователя
 
 
 @app.post("/register")
 def register_user(user: User):
-    if any(u.username == user.username for u in USERS_DB):
-        raise HTTPException(status_code=400, detail="User already exists")
+    if any(existing_user.username == user.username for existing_user in USERS_DB):
+        raise HTTPException(
+            status_code=400, detail="Пользователь уже существует")
     user.id = str(uuid.uuid4())
     USERS_DB.append(user)
     logging.info(f"Зарегистрирован пользователь: {user.username}")
     return {"status": "ok", "id": user.id}
 
-# Пример авторизации
+# Авторизация пользователя
 
 
 @app.post("/login")
 def login(user: User):
-    for u in USERS_DB:
-        if u.username == user.username and u.password == user.password:
+    for existing_user in USERS_DB:
+        if existing_user.username == user.username and existing_user.password == user.password:
             logging.info(f"Вход: {user.username}")
-            return {"status": "ok", "id": u.id, "role": u.role}
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+            return {"status": "ok", "id": existing_user.id, "role": existing_user.role}
+    raise HTTPException(status_code=401, detail="Неверные учетные данные")

@@ -6,9 +6,9 @@ export default function OrderList() {
     const [orders, setOrders] = useState([]);
     const [filters, setFilters] = useState({});
 
-    const fetchOrders = async (filterObj = {}) => {
+    const fetchOrders = async (filterParams = {}) => {
         const params = new URLSearchParams();
-        Object.entries(filterObj).forEach(([key, value]) => {
+        Object.entries(filterParams).forEach(([key, value]) => {
             if (value) params.append(key, value);
         });
         const response = await fetch(`/api/orders?${params.toString()}`);
@@ -26,9 +26,9 @@ export default function OrderList() {
             <ul>
                 {orders.map(order => (
                     <li key={order.id}>
-                        <b>{order.city}</b> | {order.status} | {order.date} | {order.price} | {order.cargo_type}
+                        <strong>{order.city}</strong> | {order.status} | {order.date} | {order.price} | {order.cargo_type}
                         <br />
-                        <i>{order.comment}</i>
+                        <em>{order.comment}</em>
                     </li>
                 ))}
             </ul>
