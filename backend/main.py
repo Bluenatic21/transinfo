@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from config.fields import ORDER_FIELDS
 from pydantic import BaseModel
 from typing import List
+import time
 
 import logging
 
@@ -15,6 +16,19 @@ logging.basicConfig(
 )
 
 app = FastAPI()
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = (time.time() - start_time) * 1000
+
+    logging.info(
+        f"{request.method} {request.url.path} | Status: {response.status_code} | "
+        f"Time: {process_time:.2f} ms | From: {request.client.host}"
+    )
+    return response
 
 # Для работы с фронтом (CORS)
 app.add_middleware(
