@@ -1,49 +1,53 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import OrderFilter from './OrderFilter';
 
-export default function OrderForm({ onCreated }) {
-    const [form, setForm] = useState({
-        city: '', status: '', date: '', price: '', cargo_type: '', comment: ''
-    });
-    const [error, setError] = useState('');
+export default function OrderList() {
+    const [orders, setOrders] = useState([]);
+    const [filters, setFilters] = useState({});
+    const [loading, setLoading] = useState(false);
 
-    const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        const res = await fetch('http://localhost:8000/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form),
+    const fetchOrders = async (filterObj = {}) => {
+        setLoading(true);
+        const params = new URLSearchParams();
+        Object.entries(filterObj).forEach(([key, value]) => {
+            if (value) params.append(key, value);
         });
-        if (res.ok) {
-            setForm({ city: '', status: '', date: '', price: '', cargo_type: '', comment: '' });
-            onCreated && onCreated();
-        } else {
-            setError('Ошибка при отправке. Проверьте поля.');
+        const res = await fetch('http://localhost:8000/orders?' + params.toString());
+        if (!res.ok) {
+            setOrders([]);
+            setLoading(false);
+            return;
         }
+        const data = await res.json();
+        setOrders(data);
+        setLoading(false);
     };
 
+    useEffect(() => {
+        fetchOrders(filters);
+        // eslint-disable-next-line
+    }, [filters]);
+
     return (
-        <form onSubmit={handleSubmit} style={{
-            background: "#191919",
-            borderRadius: 8,
-            padding: 18,
-            marginBottom: 18
-        }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <input name="city" placeholder="Город" value={form.city} onChange={handleChange} required />
-                <input name="status" placeholder="Статус" value={form.status} onChange={handleChange} required />
-                <input name="date" type="date" value={form.date} onChange={handleChange} required />
-                <input name="price" placeholder="Цена" value={form.price} onChange={handleChange} />
-                <input name="cargo_type" placeholder="Тип груза" value={form.cargo_type} onChange={handleChange} />
-                <input name="comment" placeholder="Комментарий" value={form.comment} onChange={handleChange} />
-                <button type="submit" style={{ background: "#2166fa", color: "#fff", border: 0, borderRadius: 5, padding: 10, fontWeight: 600 }}>
-                    Отправить заявку
-                </button>
-            </div>
-            {error && <div style={{ color: "#ff3333", marginTop: 8 }}>{error}</div>}
-        </form>
+        <div>
+            <OrderFilter onFilter={setFilters} />
+            {loading ? <div>Загрузка...</div> :
+                <ul style={{ marginTop: 12 }}>
+                    {orders.length === 0
+                        ? <li style={{ color: "#888" }}>Нет заявок</li>
+                        : orders.map(order => (
+                            <li key={order.id} style={{
+                                background: "#181818", color: "#fff",
+                                borderRadius: 5, padding: "9px 12px", marginBottom: 7
+                            }}>
+                                <b>{order.city}</b> | {order.status} | {order.date} | {order.price} | {order.cargo_type}
+                                <div style={{ fontSize: 12, color: "#aaa" }}>{order.comment}</div>
+                            </li>
+                        ))
+                    }
+                </ul>
+            }
+        </div>
     );
 }
