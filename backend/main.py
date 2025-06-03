@@ -4,6 +4,16 @@ from config.fields import ORDER_FIELDS
 from pydantic import BaseModel
 from typing import List
 
+import logging
+
+logging.basicConfig(
+    filename="backend_debug.log",
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(message)s",
+    encoding="utf-8",
+    filemode="w",  # <-- всегда перезаписывать при запуске!
+)
+
 app = FastAPI()
 
 # Для работы с фронтом (CORS)
