@@ -1,72 +1,35 @@
-import React, { useState } from "react";
+"use client";
+import { useState } from 'react';
 
-export default function OrderForm({ onOrderAdded }) {
-    const [fields, setFields] = useState({
-        cargoType: "",
-        weight: "",
-        fromCity: "",
-        toCity: "",
-        date: "",
-        contact: "",
-        phone: "",
+export default function OrderForm({ onCreated }) {
+    const [form, setForm] = useState({
+        city: '', status: '', date: '', price: '', cargo_type: '', comment: ''
     });
-    const [loading, setLoading] = useState(false);
-    const [ok, setOk] = useState("");
 
-    function handleChange(e) {
-        setFields({ ...fields, [e.target.name]: e.target.value });
-    }
+    const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
-    async function handleSubmit(e) {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setOk("");
-        const res = await fetch("/api/orders/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(fields),
+        const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form),
         });
-        setLoading(false);
         if (res.ok) {
-            setFields({
-                cargoType: "",
-                weight: "",
-                fromCity: "",
-                toCity: "",
-                date: "",
-                contact: "",
-                phone: "",
-            });
-            setOk("Заявка отправлена!");
-            if (onOrderAdded) onOrderAdded();
-        } else {
-            setOk("Ошибка при отправке.");
+            setForm({ city: '', status: '', date: '', price: '', cargo_type: '', comment: '' });
+            onCreated && onCreated();
         }
-    }
+    };
 
     return (
-        <form onSubmit={handleSubmit} style={{
-            display: "flex", flexDirection: "column", gap: 14,
-            background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px #0001", padding: 28,
-            border: "1px solid #eee"
-        }}>
-            <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 8 }}>Оформить заявку</div>
-            <input required name="cargoType" placeholder="Тип груза" value={fields.cargoType} onChange={handleChange} />
-            <input required type="number" min="0" name="weight" placeholder="Вес (кг)" value={fields.weight} onChange={handleChange} />
-            <input required name="fromCity" placeholder="Город отправления" value={fields.fromCity} onChange={handleChange} />
-            <input required name="toCity" placeholder="Город назначения" value={fields.toCity} onChange={handleChange} />
-            <input required type="date" name="date" placeholder="Дата погрузки" value={fields.date} onChange={handleChange} />
-            <input required name="contact" placeholder="Контактное лицо" value={fields.contact} onChange={handleChange} />
-            <input required name="phone" placeholder="Телефон" value={fields.phone} onChange={handleChange} />
-            <button type="submit" disabled={loading} style={{
-                padding: "10px 0", borderRadius: 8, background: "#1847e1", color: "#fff",
-                fontWeight: 700, fontSize: 16, marginTop: 8, border: "none", cursor: "pointer"
-            }}>
-                {loading ? "Отправка..." : "Отправить заявку"}
-            </button>
-            <div style={{ color: ok === "Заявка отправлена!" ? "green" : "#d30", minHeight: 18, marginTop: 3 }}>
-                {ok}
-            </div>
+        <form onSubmit={handleSubmit} style={{ marginBottom: 12 }}>
+            <input name="city" placeholder="Город" value={form.city} onChange={handleChange} required />
+            <input name="status" placeholder="Статус" value={form.status} onChange={handleChange} required />
+            <input name="date" type="date" value={form.date} onChange={handleChange} required />
+            <input name="price" placeholder="Цена" value={form.price} onChange={handleChange} />
+            <input name="cargo_type" placeholder="Тип груза" value={form.cargo_type} onChange={handleChange} />
+            <input name="comment" placeholder="Комментарий" value={form.comment} onChange={handleChange} />
+            <button type="submit">Создать заявку</button>
         </form>
     );
 }
