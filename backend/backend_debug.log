@@ -1,0 +1,2 @@
+2025-06-04 10:37:14,808 INFO GET /docs Status 200 Query {} Process 0.53ms
+2025-06-04 10:37:15,208 INFO GET /openapi.json Status 200 Query {} Process 7.61ms

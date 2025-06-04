@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import OrderForm from "./components/OrderForm";
 import OrderList from "./components/OrderList";
