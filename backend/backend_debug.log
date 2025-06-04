@@ -2,3 +2,5 @@
 2025-06-04 10:37:15,208 INFO GET /openapi.json Status 200 Query {} Process 7.61ms
 2025-06-04 10:44:58,310 INFO GET /docs Status 200 Query {} Process 0.23ms
 2025-06-04 10:44:58,416 INFO GET /openapi.json Status 200 Query {} Process 5.58ms
+2025-06-04 10:47:40,270 INFO GET /orders Status 200 Query {} Process 11.09ms
+2025-06-04 10:50:25,886 INFO GET /orders Status 200 Query {} Process 0.98ms
